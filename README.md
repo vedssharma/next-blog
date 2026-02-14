@@ -13,7 +13,7 @@ This is a porfolio site template complete with a blog. Includes:
 
 ## Demo
 
-https://portfolio-blog-starter.vercel.app
+https://next-blog-ochre-two.vercel.app/
 
 ## How to Use
 
