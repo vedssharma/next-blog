@@ -1,0 +1,51 @@
+---
+title: 'Local Coder: An AI Coding Assistant That Runs Entirely on Your Machine'
+publishedAt: '2026-02-16'
+summary: 'I built a Claude Code-inspired CLI coding assistant powered by llama.cpp and local language models, so your code never has to leave your machine.'
+---
+
+Cloud-based AI coding tools are incredibly useful, but they come with a tradeoff: your code gets sent to external servers. I wanted the benefits of an AI coding assistant without that compromise, so I built [Local Coder](https://github.com/vedssharma/local-coder): a CLI tool that runs entirely on your local machine using llama.cpp and open-source GGUF models.
+
+## Why I Built This
+
+I use AI coding tools daily, and tools like Claude Code have become a core part of my workflow. But there are situations where sending code to an external API is not ideal — working on proprietary projects, coding offline, or just wanting full control over your data. I wanted something that gave me a similar interactive experience but kept everything local.
+
+## What It Does
+
+Local Coder is a Python CLI with three main modes:
+
+- **Interactive Chat** — Start a multi-turn conversation with `python main.py chat`. Ask coding questions, get explanations, and iterate on ideas with streaming markdown-rendered responses right in your terminal.
+- **One-Shot Questions** — Ask a quick question without entering a session using `python main.py ask "your question here"`.
+- **Code Editing** — Request changes to files with `python main.py edit "Add error handling to @helpers.py"`. It supports a preview and confirmation workflow so you can review changes before they are applied.
+
+## The Tech Stack
+
+The project is built with:
+
+- **[llama-cpp-python](https://github.com/abetlen/llama-cpp-python)** for running GGUF models locally with GPU acceleration
+- **[Typer](https://github.com/tiangolo/typer)** for the CLI framework
+- **[Rich](https://github.com/Textualize/rich)** for beautiful terminal rendering with syntax-highlighted markdown and code blocks
+
+By default I use the Qwen2.5-Coder 7B model, but you can swap in any GGUF model — DeepSeek-Coder, CodeLlama, or whatever works best for your use case by using "/model" in the chat. The tool supports both CUDA and Apple Silicon Metal acceleration, so it runs fast on most modern hardware.
+
+## How It Works Under the Hood
+
+The architecture is straightforward:
+
+1. User input is parsed by Typer in `main.py`
+2. `@filename` references are extracted and file contents are loaded by `helpers.py`
+3. The prompt is constructed with proper context by `prompt_builder.py`
+4. llama.cpp processes the prompt and streams tokens back
+5. Rich renders the markdown output in real-time
+
+There is also Docker support if you prefer running it in a container.
+
+## What I Learned
+
+Building this taught me a lot about working with local LLMs. Tuning the context window size (`n_ctx`), managing GPU layer offloading, and picking the right quantization level all have a noticeable impact on the balance between speed and quality. A Q4_K_M quantization hits a sweet spot for most coding tasks — fast enough for interactive use while retaining good output quality.
+
+I also learned that prompt construction matters even more with smaller local models than it does with large cloud models. Being precise about how you format file context and instructions makes a big difference in the quality of responses you get from a 7B parameter model.
+
+## Try It Out
+
+The project is open source and available on [GitHub](https://github.com/vedssharma/local-coder). If you have a machine with a decent GPU (or even just an M-series Mac), give it a try. Your code stays on your machine, and you might be surprised at how capable local models have become for everyday coding tasks.
