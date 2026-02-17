@@ -1,0 +1,67 @@
+---
+title: 'Research Agent: An AI That Plans, Searches, and Synthesizes for You'
+publishedAt: '2026-02-17'
+summary: 'I built a multi-step AI research agent using LangGraph that breaks down complex questions into sub-tasks, searches the web and academic papers, builds a knowledge graph, and streams a synthesized answer — with persistent memory across sessions.'
+---
+
+There is a big difference between asking an AI a question and having an AI actually research that question. I wanted to build the latter: a system that does not just pattern-match from its training data, but actively searches, structures what it finds, and reasons over it before answering. The result is [Research Agent](https://github.com/vedssharma/research-agent) — a Next.js web app backed by a multi-step agentic pipeline.
+
+## How It Works
+
+The core of the project is a [LangGraph](https://langchain-ai.github.io/langgraphjs/) state machine with four nodes that execute in sequence, with conditional routing between them.
+
+```
+START → Planner → Researcher → KG Builder ⟲ → Synthesizer → END
+```
+
+When you submit a research question, it goes through the full pipeline:
+
+1. **Planner** — Decomposes your question into structured sub-tasks, each tagged with a type: `web_search`, `paper_search`, or `deep_dive`.
+2. **Researcher** — Executes each sub-task using the appropriate tool and collects findings.
+3. **Knowledge Graph Builder** — Organizes the findings into a knowledge graph of entities and relationships.
+4. **Synthesizer** — Combines the knowledge graph, raw findings, and relevant past sessions into a streaming final answer.
+
+After planning, if there are no sub-tasks (i.e., a simple question), the planner routes directly to the synthesizer. After each knowledge graph update, the router decides whether more research is still needed or if synthesis can begin. This makes the graph dynamic rather than just a fixed pipeline.
+
+## The Tools
+
+The researcher node has access to three tools:
+
+- **Web Search** — Powered by [Tavily](https://tavily.com/), which is designed specifically for LLM-friendly search results.
+- **Paper Search** — Queries both [Semantic Scholar](https://www.semanticscholar.org/) and [arXiv](https://arxiv.org/) for academic papers, surfacing titles, abstracts, citation counts, and publication years.
+- **Memory** — Reads from previous sessions stored via MCP to give the researcher relevant prior context before it starts digging.
+
+## Persistent Memory via MCP
+
+One thing I particularly wanted was for the agent to remember past research sessions. If you ask a follow-up question tomorrow, the agent should not start from scratch. I implemented this using the [Model Context Protocol](https://modelcontextprotocol.io/) — sessions are serialized and saved after each run, and the synthesizer pulls in relevant past sessions before generating its final answer using semantic similarity.
+
+This means the agent gets incrementally more useful over time as it builds up a personal research history.
+
+## The Knowledge Graph
+
+Rather than treating research findings as a flat list, the Knowledge Graph Builder node structures them as a graph of entities and relationships. This gives the synthesizer a much richer context to work from than raw search snippets alone, and it is surfaced in the UI as an interactive visualization alongside the chat.
+
+## The Frontend
+
+The Next.js frontend is built around four main component areas:
+
+- **Chat** — The primary interface for submitting questions and seeing streamed responses.
+- **Task Panel** — Shows each planned sub-task and its status in real time as the agent works through them.
+- **Research Timeline** — A chronological view of what the agent found and when.
+- **Knowledge Graph** — A visual graph of the entities and relationships extracted from research.
+
+The synthesizer streams its response token by token using LangGraph's streaming support, so you see the answer build up progressively rather than waiting for the whole thing at once.
+
+## What I Learned
+
+Building this taught me a lot about designing agentic workflows. A few things that stood out:
+
+**Graph routing is where the real logic lives.** The conditional edges in LangGraph are where you encode the decision-making — when to loop back for more research versus when you have enough to synthesize. Getting those routing functions right is more nuanced than it sounds, because you have to balance completeness against runaway loops.
+
+**Prompt design matters at every node.** Each node has a distinct system prompt tuned for its role. The planner prompt needs to produce well-structured, parallelizable sub-tasks. The synthesizer prompt needs to encourage integration over summarization. A general-purpose prompt does not work well across all four.
+
+**Structured outputs make multi-step pipelines reliable.** The planner uses Zod schemas with LangChain's tool-calling to produce machine-readable research plans instead of free-form text. That structured contract between nodes is what keeps the whole pipeline predictable.
+
+## Try It Out
+
+The project is deployed at [research-agent-wheat.vercel.app](https://research-agent-wheat.vercel.app) and the source is on [GitHub](https://github.com/vedssharma/research-agent). Give it a research question that requires pulling from multiple sources — that is where it shines compared to a plain chat interface.
