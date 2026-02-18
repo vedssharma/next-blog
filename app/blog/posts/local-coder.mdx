@@ -40,6 +40,10 @@ The architecture is straightforward:
 
 There is also Docker support if you prefer running it in a container.
 
+### update
+
+I just created a custom skill for this project in the repo called local-coder. This will provide other coding agents (claude code, cursor, codex, etc...) the necessary instructions in order to setup and use this project's functionality.
+
 ## What I Learned
 
 Building this taught me a lot about working with local LLMs. Tuning the context window size (`n_ctx`), managing GPU layer offloading, and picking the right quantization level all have a noticeable impact on the balance between speed and quality. A Q4_K_M quantization hits a sweet spot for most coding tasks — fast enough for interactive use while retaining good output quality.
