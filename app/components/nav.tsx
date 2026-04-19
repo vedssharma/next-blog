@@ -13,6 +13,9 @@ const navItems = {
   'https://github.com/vedssharma': {
     name: 'my github',
   },
+  '/contact': {
+    name: 'contact me',
+  },
 }
 
 export function Navbar() {
