@@ -1,0 +1,79 @@
+---
+title: 'Sports Booth: Three AI Agents Watching NBA Games Simultaneously'
+publishedAt: '2026-04-21'
+summary: 'I built a live NBA commentary system where three specialized AI agents — a stats analyst, a historian, and a sharp bettor — watch games in parallel and broadcast their takes to a live dashboard over WebSocket.'
+---
+
+I wanted to see what it would look like to have multiple AI agents watching the same event and reacting to it from entirely different angles at the same time. Sports felt like the perfect sandbox: every game generates a continuous stream of discrete moments, each of which genuinely looks different depending on your frame of reference. The result is [Sports Booth](https://github.com/vedssharma/sports-booth) — a live NBA commentary system driven by three parallel AI agents.
+
+## The Booth
+
+The system has three agents, each with a distinct persona and a dedicated data source:
+
+| Agent | Personality | Data |
+|---|---|---|
+| **The Analyst** | Data-driven. Surfaces eFG%, plus/minus, lineup splits. | `nba_api` live boxscores |
+| **The Historian** | Encyclopedic. Finds historical parallels and obscure records. | ChromaDB vector database |
+| **The Degenerate** | Sharp bettor. Flags line overreactions and soft numbers. | The Odds API |
+
+Every time a game event is detected, all three agents run in parallel and their commentary is broadcast to the dashboard in real time.
+
+## How Events Are Detected
+
+The system polls the NBA scoreboard on a configurable interval (default 45 seconds). Each poll, it compares the current snapshot to the previous one using a `detect_events()` function and emits events for:
+
+- A new live game appearing for the first time
+- A quarter or overtime period starting
+- A scoring run — one team outscoring the other by 7+ points since the last poll
+- Crunch time — a game within 5 points in Q4 or OT
+- A periodic update when nothing dramatic happened
+
+This snapshot-diff approach is simple but effective. You do not need a streaming play-by-play feed to get meaningful event granularity — just compare consecutive states.
+
+## The Architecture
+
+Each agent is a `query()` call from the Claude Agent SDK, wired to its own MCP server that runs as a stdio subprocess:
+
+```
+NBA scoreboard (polled every N seconds)
+        │
+        ▼
+   detect_events()
+        │
+        ├── run_analyst()   ──→ nba_server.py   (live stats via nba_api)
+        ├── run_historian() ──→ rag_server.py   (semantic search via ChromaDB)
+        └── run_degenerate()──→ betting_server.py (live odds via The Odds API)
+                │
+                ▼ asyncio.gather() — all three run in parallel
+                │
+                ▼
+        WebSocket broadcast → dashboard
+```
+
+The three agents are launched with `asyncio.gather()` and complete independently. The Analyst gets `max_turns=10` because it has to make at least two sequential tool calls — first the scoreboard, then the full boxscore. The other two only need one round-trip each, so they get `max_turns=6`.
+
+## MCP Servers as Lightweight Tool Providers
+
+Each MCP server is a standalone FastMCP script. The agents spawn them as stdio subprocesses on demand, use their tools, and they exit. Since all three servers only make outbound read-only API calls, the agents run with `permission_mode="bypassPermissions"` — there is nothing to guard against.
+
+All three servers fall back to realistic mock data when their external API is unavailable, so the booth always produces commentary whether or not you have an Odds API key or live games on the schedule.
+
+## The Historian's RAG Layer
+
+The Historian agent does not just rely on the model's training data for historical context — it queries a ChromaDB vector database seeded with 18 hand-curated NBA historical facts, embedded with `sentence-transformers`. When a game event comes in, it runs a semantic search against the database and surfaces the most contextually relevant precedent. It is a small dataset, but it demonstrates the pattern cleanly: retrieval-augmented generation makes the agent's historical recall both targeted and extensible.
+
+## The Dashboard
+
+The frontend is vanilla JS with no build step. It connects to the server over WebSocket and renders commentary from all three agents in side-by-side columns that update live. If multiple games are happening at once, a pill selector at the top lets you switch between them — commentary history for each game is kept in memory so switching is instant.
+
+## What I Learned
+
+**Parallel agents surface a real design tension.** When you run multiple agents on the same event simultaneously, you have to decide upfront how much they share. Here, each agent has its own MCP server and no awareness of what the others are doing. That keeps them independent and fast, but it also means they cannot build on each other's observations. A more sophisticated version might pipe the Analyst's stats output into the Historian's context before it runs.
+
+**Persona consistency comes from the system prompt, not the data.** The Degenerate sounds like a cynical sharp bettor even when The Odds API falls back to mock data. That voice is entirely in the prompt. Getting the persona right — specific about numbers, opinionated, slightly unhinged — is what makes the output interesting rather than generic.
+
+**Event detection quality sets the ceiling.** The agents are only as interesting as the events they react to. A "scoring run" threshold of 7 points produces the right density of interesting moments — low enough to catch real momentum shifts, high enough to filter out normal variance.
+
+## Try It Out
+
+The source is on [GitHub](https://github.com/vedssharma/sports-booth). Run it in `--demo` mode to cycle through a hardcoded Lakers vs Celtics game without needing live games or an Odds API key — it is the fastest way to see all three agents in action.
