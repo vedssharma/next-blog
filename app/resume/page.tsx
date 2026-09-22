@@ -3,7 +3,7 @@ export default function ResumePage() {
     <section>
       <h1 className="mb-8 text-2xl font-semibold tracking-tighter">My Resume</h1>
       <iframe
-        src="https://drive.google.com/file/d/1ZfMWAYXyf1VQjSTSazKhTMK58EdFtuDH/view?usp=sharing"
+        src="https://drive.google.com/file/d/1ZfMWAYXyf1VQjSTSazKhTMK58EdFtuDH/view"
         className="w-full"
         style={{ height: '85vh' }}
         allow="autoplay"
