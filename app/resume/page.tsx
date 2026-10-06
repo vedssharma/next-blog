@@ -1,10 +1,10 @@
 export default function ResumePage() {
   return (
     <section>
-      <h1 className="mb-8 text-2xl font-semibold tracking-tighter">My Resume</h1>
+      <h1 className="page-title">My Resume</h1>
       <iframe
         src="https://drive.google.com/file/d/1ZfMWAYXyf1VQjSTSazKhTMK58EdFtuDH/preview"
-        className="w-full"
+        className="w-full border border-[var(--line)]"
         style={{ height: '85vh' }}
         allow="autoplay"
       />
