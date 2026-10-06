@@ -1,0 +1,52 @@
+---
+title: 'Trainer: Fine-Tuning Gemma 4 for Code with QLoRA on a Rented H100'
+publishedAt: '2026-08-24'
+summary: 'I fine-tuned Gemma 4 E2B on 155k coding examples using QLoRA on a single Brev H100, and wrote the whole thing up as a repeatable workflow: validate locally, smoke test, train, publish, verify, then delete the instance.'
+---
+
+I use language models for code every day, but I had never trained one. So I picked a small open model, a big coding instruction dataset, and one rented GPU, and built [Trainer](https://github.com/vedssharma/trainer): a repo that fine-tunes Google's [Gemma 4 E2B](https://huggingface.co/google/gemma-4-E2B-it) with QLoRA on a single NVIDIA H100.
+
+## The Setup
+
+The pipeline uses Transformers, Datasets, TRL, PEFT, Accelerate, and bitsandbytes, with the [CodeFeedback-Filtered-Instruction](https://huggingface.co/datasets/m-a-p/CodeFeedback-Filtered-Instruction) dataset for training data. The recipe is 4-bit NF4 quantization, BF16 compute, rank 16 LoRA, a 2,048-token sequence length, and completion-only loss, so the model is only graded on the answer it writes and not the prompt it was given.
+
+## The Result
+
+The reference run on a rented H100 looked like this:
+
+| Item | Result |
+|---|---|
+| Training / evaluation rows | 155,501 / 1,024 |
+| Optimizer steps | 10,347 |
+| Training time | about 7h 29m |
+| GPU memory | about 68.8 GiB |
+| Final train loss | 0.6602 |
+| Final evaluation loss | 0.6097 |
+| Evaluation token accuracy | 0.8298 |
+
+The output is a PEFT adapter, not a merged model, published to Hugging Face as [vedssharma/gemma-4-e2b-code-qlora](https://huggingface.co/vedssharma/gemma-4-e2b-code-qlora). Inference loads the base Gemma model and applies the adapter on top.
+
+## The Workflow Is the Point
+
+The training code is fairly standard. What I spent the most time on was making the whole run safe to repeat, because GPU time is billed by the hour. The workflow is deliberately end to end:
+
+1. **Validate locally.** Run the unit tests and load both TOML configs on my laptop before paying for anything.
+2. **Provision a Brev instance.** Search for current H100 availability and prices right before creating it, and use exactly one named instance.
+3. **Smoke test on the real model and data.** Two optimizer steps that exercise training, evaluation, and saving. The smoke tests are where I learned that a batch size of 5 fits and larger ones run out of memory.
+4. **Train detached with checkpoints.** The full run launches with `setsid` so it survives the SSH session, saves every 1,000 steps, and keeps the newest two checkpoints.
+5. **Publish and verify.** Push the adapter to the Hub, copy everything back locally, and check every file's size and SHA-256 against a manifest.
+6. **Delete the instance only after both gates pass.** The adapter must be readable on Hugging Face and the local copy must verify.
+
+That last gate matters. The H100 instance was not stoppable, so deleting it is irreversible and removes the storage. Making deletion conditional on a verified backup means a bad copy can never cost me a seven-hour run.
+
+## What I Learned
+
+**Smoke tests pay for themselves.** Two steps on the real stack found the memory ceiling for a few cents instead of hours into the run.
+
+**Resumable checkpoints change how you feel about long jobs.** Knowing a failure at step 8,000 means resuming rather than restarting makes the whole thing much less stressful.
+
+**Loss is not quality.** Evaluation loss and token accuracy do not measure whether the generated code actually works, and the dataset is synthetic and can contain wrong or insecure answers. The next step is an executable benchmark like HumanEval before I make any claims about the model.
+
+## Try It Out
+
+The code, configs, and the full step-by-step Brev runbook are on [GitHub](https://github.com/vedssharma/trainer), and the adapter is on [Hugging Face](https://huggingface.co/vedssharma/gemma-4-e2b-code-qlora). There is also an Apple Silicon profile for bounded local validation, though it is not equivalent to the full H100 run.

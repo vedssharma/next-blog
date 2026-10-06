@@ -1,0 +1,64 @@
+---
+title: 'Collaboragent: A Shared Workspace Where a Team of AI Agents Builds Together'
+publishedAt: '2026-08-26'
+summary: 'I built a collaboration room where Claude, Gemini, and Codex split up a coding, design, or research mission, and a normalized event stream lets you watch every agent work in real time.'
+---
+
+Most AI tools hand you one model in one chat box. I wanted to see what it looks like when a whole team of agents works on a mission together, and, more importantly, what it takes to make that collaboration visible instead of a black box. The result is [Collaboragent](https://github.com/vedssharma/collaboragent): a Next.js workspace where you pick coding, design, or research, give the team a mission, and watch specialized agents divide the work.
+
+## What It Does
+
+You choose a work type, write a mission, and Collaboragent assigns roles to agents. The room shows who owns what, each agent's status and progress, which files they are touching, and Google-Docs-style cursors moving around as they work. There are three dedicated workspaces:
+
+- **Coding** — Agents produce a full set of project files, shown in a highlighted code view with a diff against each file's previous version. Generated code downloads as a zip.
+- **Design** — Agents stream a typed spatial board into an editable canvas: shapes, assets, notes, labels, and diagrams. You can edit text, resize, delete, undo/redo, and export as SVG or PNG.
+- **Research** — A web-grounded research studio that writes a multi-section paper, keeps only the sources the web search actually returned, and strips citations to anything else.
+
+## Two Ways to Run
+
+`POST /api/runs` supports two real execution modes:
+
+- **Live** — Claude and Gemini generate architecture and UX direction in parallel, Codex produces the complete project files, and an independent OpenAI reviewer scores the result. If the reviewer requests changes, the team gets one revision round.
+- **Harness** — Claude Code and Codex collaborate sequentially inside a single isolated [Vercel Sandbox](https://vercel.com/docs/vercel-sandbox) filesystem. Claude writes the architecture and first implementation, Codex inspects and completes it, and Claude does the final review before the files are collected and the sandbox is destroyed.
+
+Every role's model is configurable through environment variables, and everything goes through the AI SDK and AI Gateway.
+
+## The Event Stream Is the Product
+
+The part I am happiest with is the `RunEvent` protocol. Every stage of every pipeline gets projected into a normalized server-sent event stream: run, agent, task, file, review, and completion events.
+
+```
+Mission brief
+    ↓
+Orchestrator / task graph
+    ├── Claude architect ────┐
+    ├── Gemini researcher ───┼── Codex builder ── reviewer
+    └── coding harnesses ────┘             ↓
+                                  normalized RunEvent stream
+                                              ↓
+                                  live collaboration UI
+```
+
+Because the UI only understands events, it does not care whether an agent is a plain model call or a full coding harness in a sandbox. Adding a new execution mode just means emitting the same events. It also made the app far easier to test: the whole suite runs the three pipelines against mocked models with no provider spend.
+
+## Follow-Ups and Retries
+
+Turn on **Build on result** and the current files, board, or paper are sent along with your next instruction, so the team revises instead of starting from scratch. For coding runs, the previous files are restored into the sandbox first. Retries merge their output into existing artifacts rather than overwriting them.
+
+## Guardrails
+
+Every run spends real provider credit, and harness runs provision billable sandboxes, so `/api/runs` is gated. Production deployments refuse runs until an access token is configured, each client gets one concurrent run and a capped number per hour, and the server caps total concurrent runs.
+
+## What I Learned
+
+**Visibility is a design problem, not a logging problem.** Deciding what the event vocabulary is, and keeping it small enough that every agent type can speak it, shaped the whole app.
+
+**Independent review beats self-review.** Having a different provider's model score the output catches problems the builder happily glosses over.
+
+**Concurrent writes need an owner.** For now the harness agents work sequentially in one filesystem. For production, agents should work in isolated branches or worktrees with a merge gate that owns conflict resolution, tests, and approvals.
+
+**Streaming ties the run to the tab.** Right now closing the tab stops the run. Server-side run storage with reconnectable event streams is the obvious next step for durable, shareable runs.
+
+## Try It Out
+
+The app is deployed at [collaboragent-three.vercel.app](https://collaboragent-three.vercel.app) and the source is on [GitHub](https://github.com/vedssharma/collaboragent). Since every run costs provider credit, the hosted version may require an access code, so the repo has instructions for running it locally with your own keys.
