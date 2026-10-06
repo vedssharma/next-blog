@@ -1,0 +1,46 @@
+---
+title: 'Session Dock: A Desktop Companion for Prime Agent'
+publishedAt: '2026-09-24'
+summary: 'I built an unofficial Electron desktop app for Prime Agent that lets you browse, search, and, for sessions it owns, drive coding-agent conversations from a real GUI instead of the terminal.'
+---
+
+Terminal agents are great until you have dozens of sessions and want to find the one where you fixed that bug last Tuesday. I wanted a proper home for my [Prime Agent](https://github.com/PrimeIntellect-ai/prime-agent) conversations, so I built Session Dock (the repo is still named [prime-desktop](https://github.com/vedssharma/prime-desktop)): an unofficial, community-built desktop companion built with Electron, React, and TypeScript. It is not affiliated with or endorsed by Prime Intellect, and Prime Agent remains a separately installed dependency.
+
+## What It Does
+
+Session Dock sits on top of the same local agent service, credentials, workspaces, and saved conversations your CLI already uses. It never asks for or stores provider API keys. On top of that it adds:
+
+- **Search and organization** — Sidebar search matches titles, folders, tags, and conversation text, with an excerpt of the match. You can pin sessions, add local tags, and group by date or workspace.
+- **A good reading experience** — Markdown responses, syntax-highlighted code blocks, one-line previews of tool output, and find-in-conversation that reaches into collapsed tool output.
+- **A command palette** — Cmd/Ctrl+K for actions and jumping between sessions.
+- **A read-only workspace panel** — Git changes with diffs and a file browser with previews.
+- **Export** — Copy or save any conversation as Markdown or JSON.
+- **Appearance settings** — Light, dark, or system theme, three neutral palettes, and a custom accent color with automatic contrast adjustment.
+
+## Two Session Modes
+
+The most interesting design decision was how much control the app should have. Session Dock has two modes:
+
+- **Shared CLI sessions are read-only.** The app can browse and search them, but never touches them.
+- **Desktop-owned sessions are writable.** With a verified Prime Agent version, sessions created from the desktop can accept prompts, run tools, change files, stop, and switch models through an owned RPC connection.
+
+Writes are only enabled for CLI versions I have reviewed, so an unreviewed upstream change cannot silently turn on behavior I have not checked. And I was careful in the docs to be honest about what this is: control-routing isolation, not a filesystem sandbox.
+
+## Details That Took Real Care
+
+- **Drafts** live only in memory by default. Persisting them across restarts is opt-in, and an accepted submission clears only the exact draft that was sent, even if you have switched sessions in the meantime.
+- **Follow-ups** can be queued while an agent is running, and a failed submission keeps your draft.
+- **The workspace viewer** confines paths to the session's folder, does not follow symlinks, and runs Git with external diff and fsmonitor hooks disabled.
+- **Closing a session** preserves its saved history as read-only until you explicitly resume it with renewed workspace trust. Deleting moves the transcript to the system trash and leaves your workspace files alone.
+
+## What I Learned
+
+**Wrapping a tool you do not own means being explicit about trust.** A lot of the work was deciding what the app is allowed to do, and then making sure the UI and docs say exactly that and no more.
+
+**Testing a desktop app needs layers.** The repo has backend unit tests, browser UI tests against a fake backend, native Electron tests with simulated daemons that make no LLM requests, and a read-only smoke test against a real local CLI.
+
+**Small quality-of-life features compound.** Search, tags, a palette, and per-session drafts are each minor, but together they are what makes a session list feel like something you can work from.
+
+## Try It Out
+
+The source is on [GitHub](https://github.com/vedssharma/prime-desktop). You will need Node.js and a configured `prime-agent` CLI. Clone it, run `npm ci && npm run dev`, and it picks up your existing sessions.
