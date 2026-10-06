@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 const navItems = {
   '/': {
@@ -18,29 +21,32 @@ const navItems = {
   },
 }
 
+function isActive(path: string, pathname: string) {
+  if (!path.startsWith('/')) return false
+  if (path === '/') return pathname === '/'
+  return pathname === path || pathname.startsWith(`${path}/`)
+}
+
 export function Navbar() {
+  const pathname = usePathname()
+
   return (
-    <aside className="-ml-[8px] mb-16 tracking-tight">
-      <div className="lg:sticky lg:top-20">
-        <nav
-          className="flex flex-row items-start relative px-0 pb-0 fade md:overflow-auto scroll-pr-6 md:relative"
-          id="nav"
-        >
-          <div className="flex flex-row space-x-0 pr-10">
-            {Object.entries(navItems).map(([path, { name }]) => {
-              return (
-                <Link
-                  key={path}
-                  href={path}
-                  className="transition-all hover:text-neutral-800 dark:hover:text-neutral-200 flex align-middle relative py-1 px-2 m-1"
-                >
-                  {name}
-                </Link>
-              )
-            })}
-          </div>
-        </nav>
-      </div>
+    <aside className="mb-12 md:mb-16">
+      <nav
+        className="rule-bottom flex flex-row flex-wrap justify-between gap-x-4 gap-y-1 pb-3 text-[0.82rem] font-medium uppercase tracking-[0.07em]"
+        id="nav"
+      >
+        {Object.entries(navItems).map(([path, { name }]) => (
+          <Link
+            key={path}
+            href={path}
+            aria-current={isActive(path, pathname) ? 'page' : undefined}
+            className="py-1 text-[var(--fg)] transition-colors hover:text-[var(--accent)] aria-[current=page]:text-[var(--accent)]"
+          >
+            {name}
+          </Link>
+        ))}
+      </nav>
     </aside>
   )
 }

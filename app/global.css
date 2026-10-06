@@ -1,41 +1,116 @@
 @import 'tailwindcss';
 
-::selection {
-  background-color: #47a3f3;
-  color: #fefefe;
-}
-
 :root {
-  --sh-class: #2d5e9d;
-  --sh-identifier: #354150;
-  --sh-sign: #8996a3;
-  --sh-string: #007f7a;
-  --sh-keyword: #e02518;
-  --sh-comment: #a19595;
-  --sh-jsxliterals: #6266d1;
-  --sh-property: #e25a1c;
-  --sh-entity: #e25a1c;
+  --font-sans: var(--font-body), var(--font-geist-sans), system-ui, sans-serif;
+  --font-serif: var(--font-display), Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --bg: #f2f4f8;
+  --fg: #0f1426;
+  --soft: #2b3247;
+  --muted: #6a7188;
+  --line: #d3d8e4;
+  --code: #e8ecf4;
+  --accent: #2140d4;
+  --accent-fg: #ffffff;
+
+  --sh-class: #2140d4;
+  --sh-identifier: #2b3247;
+  --sh-sign: #6a7188;
+  --sh-string: #0d7a6a;
+  --sh-keyword: #c2255c;
+  --sh-comment: #8a91a8;
+  --sh-jsxliterals: #5b3fd1;
+  --sh-property: #b45309;
+  --sh-entity: #b45309;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --sh-class: #4c97f8;
-    --sh-identifier: white;
+    --bg: #0d111c;
+    --fg: #eef0f7;
+    --soft: #c5cadb;
+    --muted: #8a91a8;
+    --line: #262d42;
+    --code: #151b2b;
+    --accent: #8fa6ff;
+    --accent-fg: #0d111c;
+
+    --sh-class: #8fa6ff;
+    --sh-identifier: #eef0f7;
     --sh-keyword: #f47067;
-    --sh-string: #0fa295;
+    --sh-string: #6fd9c4;
+    --sh-comment: #6a7188;
+    --sh-property: #f2a65a;
+    --sh-entity: #f2a65a;
   }
   html {
     color-scheme: dark;
   }
 }
 
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-fg);
+}
+
 html {
   min-width: 360px;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+body {
+  background-color: var(--bg);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.display {
+  font-family: var(--font-serif);
+  font-variation-settings: 'opsz' 144;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.page-title {
+  font-family: var(--font-serif);
+  font-variation-settings: 'opsz' 144;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  text-wrap: balance;
+  font-size: clamp(2.5rem, 9vw, 4rem);
+  margin-bottom: 1.5rem;
+}
+
+.rule-top {
+  border-top: 2px solid var(--fg);
+}
+
+.rule-bottom {
+  border-bottom: 2px solid var(--fg);
 }
 
 .prose .anchor {
-  @apply absolute invisible no-underline;
-
+  position: absolute;
+  visibility: hidden;
+  text-decoration: none;
   margin-left: -1em;
   padding-right: 0.5em;
   width: 80%;
@@ -43,82 +118,159 @@ html {
   cursor: pointer;
 }
 
-.anchor:hover {
-  @apply visible;
-}
-
-.prose a {
-  @apply underline transition-all decoration-neutral-400 dark:decoration-neutral-600 underline-offset-2 decoration-[0.1em];
+.anchor:hover,
+.prose *:hover > .anchor {
+  visibility: visible;
 }
 
 .prose .anchor:after {
-  @apply text-neutral-300 dark:text-neutral-700;
+  color: var(--muted);
   content: '#';
 }
 
-.prose *:hover > .anchor {
-  @apply visible;
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s;
+}
+
+.prose a:hover {
+  opacity: 0.75;
 }
 
 .prose pre {
-  @apply bg-neutral-50 dark:bg-neutral-900 rounded-lg overflow-x-auto border border-neutral-200 dark:border-neutral-900 py-2 px-3 text-sm;
+  background: var(--code);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  overflow-x: auto;
+  padding: 0.9rem 1.1rem;
+  font-size: 0.85rem;
+  margin: 1.25rem 0;
 }
 
 .prose code {
-  @apply px-1 py-0.5 rounded-lg;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.1rem 0.3rem;
+  background: var(--code);
+  border-radius: 2px;
 }
 
 .prose pre code {
-  @apply p-0;
-  border: initial;
-  line-height: 1.5;
+  padding: 0;
+  background: none;
+  line-height: 1.6;
 }
 
 .prose code span {
-  @apply font-medium;
+  font-weight: 500;
 }
 
 .prose img {
   /* Don't apply styles to next/image */
-  @apply m-0;
+  margin: 0;
 }
 
 .prose p {
-  @apply my-4 text-neutral-800 dark:text-neutral-200;
+  margin: 1.1rem 0;
+  color: var(--soft);
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 2.2rem 0 0.5rem;
+  color: var(--fg);
+  text-wrap: balance;
 }
 
 .prose h1 {
-  @apply text-4xl font-medium tracking-tight mt-6 mb-2;
+  font-size: 2.25rem;
 }
 
 .prose h2 {
-  @apply text-xl font-medium tracking-tight mt-6 mb-2;
+  font-size: 1.65rem;
 }
 
 .prose h3 {
-  @apply text-xl font-medium tracking-tight mt-6 mb-2;
+  font-size: 1.3rem;
 }
 
 .prose h4 {
-  @apply text-lg font-medium tracking-tight mt-6 mb-2;
+  font-size: 1.15rem;
 }
 
 .prose strong {
-  @apply font-medium;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .prose ul {
-  @apply list-disc pl-6;
+  list-style: disc;
+  padding-left: 1.5rem;
+  color: var(--soft);
 }
 
 .prose ol {
-  @apply list-decimal pl-6;
+  list-style: decimal;
+  padding-left: 1.5rem;
+  color: var(--soft);
+}
+
+.prose li {
+  margin: 0.35rem 0;
+}
+
+.prose li::marker {
+  color: var(--muted);
+}
+
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  color: var(--soft);
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 2rem 0;
 }
 
 .prose > :first-child {
   /* Override removing top margin, causing layout shift */
   margin-top: 1.25em !important;
   margin-bottom: 1.25em !important;
+}
+
+.prose table {
+  border: 1px solid var(--line);
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1.25rem 0;
+}
+
+.prose th {
+  text-align: left;
+  font-weight: 600;
+  padding: 0.55rem 0.9rem;
+  background: var(--code);
+  color: var(--fg);
+}
+
+.prose td {
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--line);
+  color: var(--soft);
 }
 
 pre::-webkit-scrollbar {

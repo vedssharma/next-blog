@@ -1,8 +1,8 @@
 export default function ContactPage() {
   return (
     <section>
-      <h1 className="font-semibold text-2xl mb-8 tracking-tighter">Contact Me</h1>
-      <p className="mb-8 text-neutral-600 dark:text-neutral-400">
+      <h1 className="page-title">Contact Me</h1>
+      <p className="mb-8 max-w-[36em] text-[1.1rem] text-[var(--soft)]">
         Have a question or want to work together? Send me a message and I'll get back to you.
       </p>
       <form
@@ -15,7 +15,7 @@ export default function ContactPage() {
         <input type="hidden" name="_next" value="https://vedsharma.dev/contact?sent=true" />
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="name" className="text-sm font-medium">
+          <label htmlFor="name" className="text-[0.8rem] font-medium uppercase tracking-[0.07em] text-[var(--muted)]">
             Name
           </label>
           <input
@@ -24,12 +24,12 @@ export default function ContactPage() {
             name="name"
             required
             placeholder="Your name"
-            className="border border-neutral-200 dark:border-neutral-700 bg-transparent rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-400"
+            className="border border-[var(--line)] bg-[var(--code)] text-[var(--fg)] placeholder:text-[var(--muted)] rounded-sm px-3 py-2.5 text-base focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-sm font-medium">
+          <label htmlFor="email" className="text-[0.8rem] font-medium uppercase tracking-[0.07em] text-[var(--muted)]">
             Email
           </label>
           <input
@@ -38,12 +38,12 @@ export default function ContactPage() {
             name="email"
             required
             placeholder="your@email.com"
-            className="border border-neutral-200 dark:border-neutral-700 bg-transparent rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-400"
+            className="border border-[var(--line)] bg-[var(--code)] text-[var(--fg)] placeholder:text-[var(--muted)] rounded-sm px-3 py-2.5 text-base focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="message" className="text-sm font-medium">
+          <label htmlFor="message" className="text-[0.8rem] font-medium uppercase tracking-[0.07em] text-[var(--muted)]">
             Message
           </label>
           <textarea
@@ -52,13 +52,13 @@ export default function ContactPage() {
             required
             rows={6}
             placeholder="Your message..."
-            className="border border-neutral-200 dark:border-neutral-700 bg-transparent rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-neutral-400 resize-none"
+            className="border border-[var(--line)] bg-[var(--code)] text-[var(--fg)] placeholder:text-[var(--muted)] rounded-sm px-3 py-2.5 text-base focus:outline-none focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] resize-none"
           />
         </div>
 
         <button
           type="submit"
-          className="self-start px-4 py-2 text-sm font-medium bg-neutral-900 dark:bg-neutral-100 text-neutral-100 dark:text-neutral-900 rounded hover:opacity-80 transition-opacity"
+          className="self-start px-5 py-2.5 text-[0.85rem] font-medium uppercase tracking-[0.07em] bg-[var(--accent)] text-[var(--accent-fg)] rounded-sm hover:opacity-85 transition-opacity"
         >
           Send message
         </button>
